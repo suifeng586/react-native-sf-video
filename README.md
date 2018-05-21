@@ -9,10 +9,10 @@
 
 # 安装
 * npm install react-native-sf-video
-# npm install react-native-video
-# npm install react-native-sf-net
-# react-native link react-native-sf-video
-# react-native link react-native-video
+* npm install react-native-video
+* npm install react-native-sf-net
+* react-native link react-native-sf-video
+* react-native link react-native-video
 
 
 # Props
