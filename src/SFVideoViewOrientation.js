@@ -1,5 +1,7 @@
 var SFVideoOrientation = require('react-native').NativeModules.SFVideoOrientation;
-
+import {
+    Platform
+} from "react-native";
 module.exports = {
     UNKNOWN:'0',
     TOP:'1',
@@ -8,7 +10,7 @@ module.exports = {
     DOWN:'4',
     getOrientation(cb) {
         SFVideoOrientation.getOrientation((error,orientation) =>{
-            cb(orientation.orientation);
+            cb(orientation.orientation+'');
         });
     },
     setOrientationLeft() {
@@ -16,5 +18,17 @@ module.exports = {
     },
     setOrientationTop() {
         SFVideoOrientation.setOrientationTop();
+    },
+    startListener(){
+        if (Platform.OS == 'android'){
+
+            SFVideoOrientation.setOrientationEventListener();
+        }
+    },
+    stopListener(){
+        if (Platform.OS == 'android') {
+            SFVideoOrientation.removeOrientationEventListener();
+        }
     }
+
 }

@@ -13,6 +13,8 @@
 * npm install react-native-sf-net
 * react-native link react-native-sf-video
 * react-native link react-native-video
+* npm install react-native-extra-dimensions-android
+* react-native link react-native-extra-dimensions-android
 
 
 # Props
@@ -45,6 +47,7 @@
 
 
 # 例子
+# 使用前需要调用SFNet.registNetListener();来监听网络状态
 ```
 import React, { Component } from 'react';
 import {

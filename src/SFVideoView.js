@@ -21,10 +21,14 @@ import SFVideoViewPrompt from "./SFVideoViewPrompt"
 import SFVideoViewConfig from "./SFVideoViewConfig"
 var dw = Dimensions.get('window').width;
 var dh = Dimensions.get('window').height;
-
 import Video from 'react-native-video';
 import SFNet from 'react-native-sf-net';
 import Orientation from './SFVideoViewOrientation'
+
+import ExtraDimensions from 'react-native-extra-dimensions-android';
+if (Platform.OS == 'android'){
+    dh = ExtraDimensions.get('REAL_WINDOW_HEIGHT');
+}
 
 const aniDuration = 200;
 export default class SFVideoView extends Component {
@@ -35,14 +39,12 @@ export default class SFVideoView extends Component {
         this.state = {
             paused:false,
             volume:1,
-            isReloaded:false,
+            isReloaded:true,
             isFull:false,
             widthValue:0,
             isHideStatusBar:false
         }
-        this.isFirst = true;
         this.isNoWifi = false;
-        this.isLoadFinish = false;
         this.width = new Animated.Value(0);
         this.height = new Animated.Value(0);
         this.rotate = new Animated.Value(0);
@@ -76,7 +78,8 @@ export default class SFVideoView extends Component {
         videoPauseSource:PropTypes.number,
         onFullScreen: PropTypes.func,
         onMinScreen: PropTypes.func,
-        onEnd: PropTypes.func
+        onEnd: PropTypes.func,
+        onError: PropTypes.func
 
     }
     static defaultProps={
@@ -182,42 +185,43 @@ export default class SFVideoView extends Component {
         },300);
     }
     componentWillMount(){
+        this.setState({
+            paused:!this.props.autoPlay
+        })
         this.width.addListener((event) => {
             this.setState({
                 widthValue:event.value
             })
         });
-        SFNet.checkNet((value,isWifi)=>{
-            if (value == true){//有网非wifi环境
-                if (isWifi == false){
-                    this.isNoWifi = true;
-                    this.checkIsNoWifi();
-                }
-            }else{
 
-            }
-        });
         this.initVideoView();
         this.listenOrientation();
     }
 
     componentDidMount(){
+        if (!SFNet.isWifi()){
+            this.isNoWifi = true;
+            if (this.isNoWifi && SFVideoViewConfig.play_with_nowifi == false){
+                this.refs.prompt.showWithNoWifi(this.props.videoSize)
+            }else{
+                this.setState({
+                    isReloaded:false
+                })
+            }
+        }else{
+            this.setState({
+                isReloaded:false
+            })
+        }
+        Orientation.startListener();
     }
     componentWillUnmount(){
-
+        Orientation.stopListener();
         this.width.removeAllListeners();
         this.orientationTimer && clearInterval(this.orientationTimer);
         this.onPause();
     }
-    checkIsNoWifi = () => {
-        if (this.isNoWifi && this.isLoadFinish && SFVideoViewConfig.play_with_nowifi == false){
-            this.setState({
-                paused:true
-            })
-            this.refs.prompt.showWithNoWifi(this.props.videoSize)
-        }
 
-    }
     onEnd = () => {
         this.setState({
             paused:true
@@ -235,14 +239,7 @@ export default class SFVideoView extends Component {
         }
     }
     onProgress = (timer) => {
-        if (this.isFirst){
-            this.isFirst = false;
-            this.setState({
-                paused:!this.props.autoPlay
-            })
-            this.isLoadFinish = true;
-            this.checkIsNoWifi();
-        }
+
         let curTime =  Math.round(timer.currentTime);
         let totalTime =  0;
         if (Platform.OS === 'android') {
@@ -254,8 +251,18 @@ export default class SFVideoView extends Component {
 
     }
     onError = (error) => {
+        if (Platform.OS == 'android'){
+            if(error.error.extra == '-19' && error.error.what == 1){
 
-        this.refs.prompt.showWithError();
+            }else{
+                this.refs.prompt.showWithError();
+            }
+        }else{
+            this.refs.prompt.showWithError();
+        }
+        if (this.props.onError){
+            this.props.onError(error);
+        }
     }
 
     clickScreen = () =>{
@@ -342,6 +349,12 @@ export default class SFVideoView extends Component {
     onLayout = (event) => {
 
     }
+    pause = () => {
+        this.refs.tool.pause();
+    }
+    play = () => {
+        this.refs.tool.play();
+    }
     render() {
         var {
             left,
@@ -356,9 +369,9 @@ export default class SFVideoView extends Component {
                 zIndex:9999,
                 backgroundColor:this.props.containerBackgroundColor,
                 transform:[{translateX:this.posX},{translateY:this.posY},{rotate:this.rotate.interpolate({
-                        inputRange: [0,360],
-                        outputRange: ['0deg', '360deg'],
-                    })}]
+                    inputRange: [0,360],
+                    outputRange: ['0deg', '360deg'],
+                })}]
             }} onLayout={this.onLayout}>
                 <StatusBar hidden={this.state.isHideStatusBar}/>
                 {this.render_video()}
@@ -396,7 +409,7 @@ export default class SFVideoView extends Component {
                             this.refs.prompt.hide();
                             SFVideoViewConfig.play_with_nowifi = true;
                             this.setState({
-                                paused:false
+                                isReloaded:false
                             })
                         }
                     }}

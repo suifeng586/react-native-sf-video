@@ -165,6 +165,21 @@ export default class SFVideoViewTool extends Component {
         }
     }
 
+    pause = () => {
+        this.setState({
+            paused:true
+        })
+        this.props.onPause();
+        this.removeTimer();
+    }
+    play = () => {
+        this.setState({
+            paused:false,
+        })
+        this.props.onPlay();
+        this.recoverAnimate();
+    }
+
     clickFull = () => {
         if (this.props.isFull){
             this.props.onMinScree()
@@ -204,20 +219,20 @@ export default class SFVideoViewTool extends Component {
             return null;
         }
         return(
-                <Text style={{
-                    color:'white',
-                    fontSize:12,
-                    paddingLeft:10,
-                    position:'absolute',
-                    left: 0,
-                    right: 0,
-                    top: 0,
-                    height:barHeight,
-                    flexDirection:'row',
-                    alignItems:'center',
-                    lineHeight:barHeight,
-                    backgroundColor:'transparent',
-                }}>{this.props.title}</Text>
+            <Text style={{
+                color:'white',
+                fontSize:12,
+                paddingLeft:10,
+                position:'absolute',
+                left: 0,
+                right: 0,
+                top: 0,
+                height:barHeight,
+                flexDirection:'row',
+                alignItems:'center',
+                lineHeight:barHeight,
+                backgroundColor:'transparent',
+            }}>{this.props.title}</Text>
         )
     }
     render_bar = () => {
